@@ -110,9 +110,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
@@ -131,7 +128,6 @@ DJOSER = {
         'current_user': 'users.serializers.CustomUserSerializer',
         'user': 'users.serializers.CustomUserSerializer',
     },
-    'PERMISSIONS': {
-       'user': ['users.permissions.CurrentUserOrAdminOrReadOnly'],
-    }
 }
+
+AUTH_USER_MODEL = 'users.User'
