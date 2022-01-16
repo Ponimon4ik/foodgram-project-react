@@ -17,7 +17,6 @@ class ListCreateRetrieveViewSet(
 class UserViewSet(ListCreateRetrieveViewSet):
 
     queryset = User.objects.all().order_by('id')
-    #permission_classes = (permissions.IsAuthenticated,)
     pagination_class = pagination.LimitOffsetPagination
 
     def get_permissions(self):

@@ -47,7 +47,8 @@ class Recipe(models.Model):
         related_name='recipe'
     )
     tags = models.ManyToManyField(
-        Tag, verbose_name='Теги', through='TagRecipe'
+        Tag, verbose_name='Теги', through='TagRecipe',
+        related_name='recipe'
     )
     image = models.ImageField(
         verbose_name='Картинка', upload_to='recipes/'
@@ -64,10 +65,10 @@ class Recipe(models.Model):
 class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.PROTECT, related_name='ingredients_in_recipe')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipes_ingredients_list')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients_in_recipe')
     amount = models.IntegerField(verbose_name='Количество')
 
 
 class TagRecipe(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE,)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='tags_in_recipe')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='tags_in_recipe')
