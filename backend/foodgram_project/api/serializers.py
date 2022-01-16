@@ -83,10 +83,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ingredient['amount']
             )
         for tag in tags:
-            try:
-                TagRecipe.objects.create(
-                    recipe=recipe, tag=tag
-                )
-            except Exception:
-                raise Exception(tags)
+            TagRecipe.objects.create(
+                recipe=recipe, tag=tag
+            )
         return recipe
+
+    def to_representation(self, obj):
+        data = RecipeReadSerializer(obj).data
+        return data
