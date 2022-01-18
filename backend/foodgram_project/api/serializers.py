@@ -8,8 +8,8 @@ from users.serializers import CustomUserSerializer
 
 class TagRecipeSerializer(serializers.ModelSerializer):
 
-    id = serializers.PrimaryKeyRelatedField(
-        source='tag.id', queryset=Tag.objects.all()
+    id = serializers.SlugRelatedField(
+        source='tag', slug_field='id', queryset=Tag.objects.all()
     )
     name = serializers.ReadOnlyField(source='tag.name')
     color = serializers.ReadOnlyField(source='tag.color')
@@ -23,11 +23,14 @@ class TagRecipeSerializer(serializers.ModelSerializer):
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
 
-    id = serializers.PrimaryKeyRelatedField(
-        source='ingredient.id', queryset=Ingredient.objects.all()
+    id = serializers.SlugRelatedField(
+        source='ingredient',
+        slug_field='id', queryset=Ingredient.objects.all()
     )
     name = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
     amount = serializers.IntegerField()
 
     class Meta:
@@ -79,7 +82,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             IngredientRecipe.objects.create(
                 recipe=recipe,
-                ingredient=ingredient['ingredient']['id'],
+                ingredient=ingredient['ingredient'],
                 amount=ingredient['amount']
             )
         for tag in tags:
@@ -88,6 +91,30 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         return recipe
 
-    def to_representation(self, obj):
-        data = RecipeReadSerializer(obj).data
-        return data
+    def update(self, instance, validated_data):
+        ingredients_data = validated_data.pop('ingredients_in_recipe', None)
+        tags_data = validated_data.pop('tags', None)
+        instance.image = validated_data.get('image', instance.image)
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
+        if ingredients_data:
+            instance.ingredients.clear()
+            for ingredient in ingredients_data:
+                IngredientRecipe.objects.create(
+                    recipe=instance,
+                    ingredient=ingredient['ingredient'],
+                    amount=ingredient['amount']
+                )
+        if tags_data:
+            instance.tags.clear()
+            for tag in tags_data:
+                TagRecipe.objects.create(
+                    recipe=instance, tag=tag
+                )
+        return instance
+
+    def to_representation(self, instance):
+        return RecipeReadSerializer(instance).data

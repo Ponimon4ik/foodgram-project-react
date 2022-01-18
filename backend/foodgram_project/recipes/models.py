@@ -54,21 +54,33 @@ class Recipe(models.Model):
         verbose_name='Картинка', upload_to='recipes/'
     )
     name = models.TextField(
-        verbose_name='Название',max_length=200
+        verbose_name='Название', max_length=200
     )
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления', help_text='минут'
     )
 
 
 class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.PROTECT, related_name='ingredients_in_recipe')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients_in_recipe')
-    amount = models.IntegerField(verbose_name='Количество')
+        Ingredient, on_delete=models.PROTECT,
+        related_name='ingredients_in_recipe'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='ingredients_in_recipe')
+    amount = models.PositiveIntegerField(verbose_name='Количество')
 
 
 class TagRecipe(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='tags_in_recipe')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='tags_in_recipe')
+    tag = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        related_name='tags_in_recipe'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='tags_in_recipe'
+    )
