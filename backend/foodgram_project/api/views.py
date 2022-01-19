@@ -34,14 +34,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer_class=FavoriteRecipeWriteSerializer
     )
     def favorite(self, request, pk=None):
-        if request.method == 'DELETE':
-            instance = self.get_object()
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
         data = {
             'user': request.user.id,
             'recipe': pk
         }
+        if request.method == 'DELETE':
+            instance = FavoriteRecipe.objects.get(**data)
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         serializer = FavoriteRecipeWriteSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
