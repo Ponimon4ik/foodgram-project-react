@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.core import serializers
 
-from recipes.models import Recipe
+from recipes.models import Recipe, Tag, Ingredient
 from .serializers import RecipeReadSerializer, RecipeWriteSerializer
 from .permissions import IsAuthorOrAdminOrReadOnly
 
@@ -23,3 +23,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user, patrial=True)
+
+class ListRetrieveViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin, viewsets.GenericViewSet
+):
+
+    permission_classes = (permissions.AllowAny, )
+
+    pass
+
+class TagViewSet():
+
+    queryset = Tag.objects.all()
+
+class IngredientViewSet():
+
+    queryset = Ingredient.objects.all()
+    pagination_class = pagination.LimitOffsetPagination

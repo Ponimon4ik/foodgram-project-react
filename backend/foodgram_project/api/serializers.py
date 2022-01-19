@@ -51,6 +51,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
         model = Recipe
         fields = '__all__'
+        read_only_fields = '__all__'
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -118,3 +119,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return RecipeReadSerializer(instance).data
+
+class TagSerializer(serializers.ModelSerializer):
+
+    clss Meta:
+        model = Tag
+        fields = '__all__'
+        read_only_fields = '__all__'    
+
+class IngredientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
+        read_only_fields = '__all__'
