@@ -84,3 +84,26 @@ class TagRecipe(models.Model):
         Recipe, on_delete=models.CASCADE,
         related_name='tags_in_recipe'
     )
+
+
+class FavoriteRecipe(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorite_recipe'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorite_recipe'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_favorite_recipe'
+
+            )
+        ]

@@ -2,8 +2,12 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from drf_extra_fields.fields import Base64ImageField
 
-from recipes.models import Recipe, TagRecipe, Tag, Ingredient, IngredientRecipe
+from recipes.models import (Recipe, TagRecipe, Tag, Ingredient,
+                            IngredientRecipe, FavoriteRecipe)
+from users.models import User
 from users.serializers import CustomUserSerializer
+
+UNIQUE_FAVORITE_RECIPE = 'Рецепт уже находится в избранном'
 
 
 class TagRecipeSerializer(serializers.ModelSerializer):
@@ -51,7 +55,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
         model = Recipe
         fields = '__all__'
-        read_only_fields = '__all__'
+        read_only_fields = ('__all__',)
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -120,16 +124,66 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return RecipeReadSerializer(instance).data
 
+
 class TagSerializer(serializers.ModelSerializer):
 
-    clss Meta:
+    class Meta:
         model = Tag
         fields = '__all__'
-        read_only_fields = '__all__'    
+        read_only_fields = ('__all__', )
+
 
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
         fields = '__all__'
-        read_only_fields = '__all__'
+        read_only_fields = ('__all__', )
+
+
+class FavoriteRecipeReadSerializer(serializers.ModelSerializer):
+
+    id = serializers.SlugRelatedField(
+        source='recipe', slug_field='id',
+        queryset=Recipe.objects.all()
+    )
+    name = serializers.SlugRelatedField(
+        source='recipe', slug_field='name',
+        queryset=Recipe.objects.all()
+    )
+    image = Base64ImageField(
+        source='recipe.image',
+    )
+    cooking_time = serializers.SlugRelatedField(
+        source='recipe', slug_field='cooking_time',
+        queryset=Recipe.objects.all()
+    )
+
+    class Meta:
+        fields = ('id', 'name', 'image', 'cooking_time')
+        model = FavoriteRecipe
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
+
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all(),
+
+                                                )
+
+    class Meta:
+        fields = ('user', 'recipe')
+        model = FavoriteRecipe
+        validators = [
+            UniqueTogetherValidator(
+                queryset=FavoriteRecipe.objects.all(),
+                fields=('user', 'recipe'),
+                message=UNIQUE_FAVORITE_RECIPE,
+            )
+        ]
+
+    def to_representation(self, instance):
+        return FavoriteRecipeReadSerializer(instance).data
