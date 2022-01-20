@@ -1,14 +1,16 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from drf_extra_fields.fields import Base64ImageField
+from django.db.models import Count
 
 from recipes.models import (Recipe, TagRecipe, Tag, Ingredient,
                             IngredientRecipe, FavoriteRecipe)
-from users.models import User
+from users.models import User, Follow
 from users.serializers import CustomUserSerializer
 
 UNIQUE_FAVORITE_RECIPE = 'Рецепт уже находится в избранном'
-
+SUBSCRIPTION_ERROR = "Невозможно подписаться на себя"
+DUPLICATE_SUBSCRIPTION = 'Вы уже подписаны на данного автора'
 
 class TagRecipeSerializer(serializers.ModelSerializer):
 
@@ -35,7 +37,6 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
     )
-    amount = serializers.IntegerField() # поробовать убрать
 
     class Meta:
 
@@ -50,7 +51,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         many=True, source='ingredients_in_recipe'
     )
     tags = TagRecipeSerializer(many=True, source='tags_in_recipe')
-    is_favorited = serializers.SerializerMethodField()
+   # is_favorited = serializers.SerializerMethodField()
 
     class Meta:
 
@@ -66,11 +67,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     #     return False
 
 
-
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    # HiddenField + убрать из метода save() во вьюсете
-    author = serializers.PrimaryKeyRelatedField(
-        read_only=True, default=serializers.CurrentUserDefault()
+
+    author = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
     )
     ingredients = IngredientRecipeSerializer(
         many=True, source='ingredients_in_recipe'
@@ -81,9 +81,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True
     )
     image = Base64ImageField()
-    name = serializers.CharField() # попробовать убрать
-    text = serializers.CharField() # попробовать убрать 
-    cooking_time = serializers.IntegerField() # попробовать убрать
 
     class Meta:
         model = Recipe
@@ -151,38 +148,19 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class FavoriteRecipeReadSerializer(serializers.ModelSerializer):
-    # Попробовать нереляционные поля оставить source = recipe.id.
-    id = serializers.SlugRelatedField(
-        source='recipe', slug_field='id',
-        queryset=Recipe.objects.all()
-    )
-    name = serializers.SlugRelatedField(
-        source='recipe', slug_field='name',
-        queryset=Recipe.objects.all()
-    )
-    image = Base64ImageField(
-        source='recipe.image',
-    )
-    cooking_time = serializers.SlugRelatedField(
-        source='recipe', slug_field='cooking_time',
-        queryset=Recipe.objects.all()
-    )
+
+    id = serializers.ReadOnlyField(source='recipe.id')
+    name = serializers.ReadOnlyField(source='recipe.name')
+    image = Base64ImageField(source='recipe.image')
+    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
 
     class Meta:
         fields = ('id', 'name', 'image', 'cooking_time')
         model = FavoriteRecipe
-        read_only_fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = ('__all__', )
 
 
 class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
-    # HiddenField + убрать из метода save() во вьюсете default=serializers.CurrentUserDefault()
-    # Попробовать убрать вообще
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-    )# убрать queryset + read_only == true или попробовать вообще убрать
-    recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all(),
-
-                                                )
 
     class Meta:
         fields = ('user', 'recipe')
@@ -194,6 +172,66 @@ class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
                 message=UNIQUE_FAVORITE_RECIPE,
             )
         ]
-        #read_only = all
+        read_only_fields = ('__all__', )
+
     def to_representation(self, instance):
         return FavoriteRecipeReadSerializer(instance).data
+
+
+class AuthorsRecipeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FollowReadSerializer(serializers.ModelSerializer):
+
+    id = serializers.StringRelatedField(source='following.id')
+    email = serializers.EmailField(source='following.email')
+    username = serializers.CharField(source='following.username')
+    first_name = serializers.CharField(source='following.first_name')
+    last_name = serializers.CharField(source='following.last_name')
+    recipes = AuthorsRecipeSerializer(
+        source='following.recipes',
+        many=True
+    )
+    recipes_count = serializers.IntegerField()
+
+    class Meta:
+        model = Follow
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'recipes', 'recipes_count'
+        )
+        read_only_fields = ('__all__', )
+
+
+class FollowSerializer(serializers.ModelSerializer):
+
+    user = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        fields = ('user', 'following')
+        model = Follow
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=['user', 'following'],
+                message=DUPLICATE_SUBSCRIPTION
+            )
+        ]
+
+    def validate_following(self, value):
+        if value == self.context['request'].user:
+            raise serializers.ValidationError(SUBSCRIPTION_ERROR)
+        return value
+
+    def to_representation(self, instance):
+        queryset = Follow.objects.annotate(
+                recipes_count=Count('following__recipes')
+            ).order_by('id')
+        obj = queryset.get(id=instance.id)
+        return FollowReadSerializer(obj).data

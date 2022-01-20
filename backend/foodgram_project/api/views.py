@@ -1,8 +1,8 @@
-from rest_framework import status, permissions, mixins, viewsets, pagination, views
+from rest_framework import (status, permissions,
+                            viewsets, pagination)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.core import serializers
 from django.shortcuts import get_object_or_404
 
 from recipes.models import Recipe, Tag, Ingredient, FavoriteRecipe
@@ -22,12 +22,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save(author=self.request.user, patrial=True)
-
     @action(
         methods=['post', 'delete'],
         detail=True,
@@ -40,12 +34,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'recipe': pk
         }
         if request.method == 'DELETE':
-            favorite_recipe = get_object_or_404(FavoritesRecipes, **data)
+            favorite_recipe = get_object_or_404(FavoriteRecipe, **data)
             self.perform_destroy(favorite_recipe)
             return Response(status=status.HTTP_204_NO_CONTENT)
         serializer = FavoriteRecipeWriteSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

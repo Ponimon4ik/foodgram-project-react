@@ -1,12 +1,15 @@
-from rest_framework import status, permissions, mixins, viewsets, pagination
+from rest_framework import (status, permissions, mixins,
+                            viewsets, pagination)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 
 from .models import User, Follow
-from .serializers import (CustomUserSerializer, CustomUserCreateSerializer, 
-                          FollowSerializer, )
+from .serializers import (CustomUserSerializer, CustomUserCreateSerializer,
+                          )
+from api.serializers import FollowReadSerializer, FollowSerializer
 
 
 class ListCreateRetrieveViewSet(
@@ -48,28 +51,36 @@ class UserViewSet(ListCreateRetrieveViewSet):
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # @action(['get'], detail=False)
-    # def subscriptions(self, request)
-    #     serializer = FollowSerializer(request.user.follower, many = True)
-    #     return Response(serializer.data)
+    @action(
+        ['get'], detail=False,
+        pagination_class=pagination.LimitOffsetPagination
+    )
+    def subscriptions(self, request):
+        queryset = request.user.follower.annotate(
+                recipes_count=Count('following__recipes')
+            ).order_by('id')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = FollowReadSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = FollowReadSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-    # @action(
-    #     ['post', 'delete'],
-    #     detail=True,
-    #     url_name='subscriptions',
-    #     #serializer_class=FollowSerializer  
-    # )
-    # def create_or_delete_subscription(self, request, pk=None)
-    #     data = {
-    #         'user': request.user,
-    #         'following': pk
-    #     }
-    #     if request.method =='DELETE':
-    #         subscription = get_object_or_404(Follow, **data)
-    #         self.perform_destroy(subscription)
-    #         return Response(status=status.HTTP_204_NO_CONTENT)
-    #     serializer = FollowSerializer(data=data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save(user=request.user)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-        
+    @action(
+        ['post', 'delete'],
+        detail=True,
+        url_path='subscriptions',
+    )
+    def create_or_delete_subscription(self, request, pk=None):
+        data = {
+            'user': request.user,
+            'following': pk
+        }
+        if request.method == 'DELETE':
+            subscription = get_object_or_404(Follow, **data)
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = FollowSerializer(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
