@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core import serializers
+from django.shortcuts import get_object_or_404
 
 from recipes.models import Recipe, Tag, Ingredient, FavoriteRecipe
 from .serializers import (RecipeReadSerializer, RecipeWriteSerializer,
@@ -39,8 +40,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'recipe': pk
         }
         if request.method == 'DELETE':
-            instance = FavoriteRecipe.objects.get(**data)
-            self.perform_destroy(instance)
+            favorite_recipe = get_object_or_404(FavoritesRecipes, **data)
+            self.perform_destroy(favorite_recipe)
             return Response(status=status.HTTP_204_NO_CONTENT)
         serializer = FavoriteRecipeWriteSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -48,41 +49,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ListRetrieveViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin, viewsets.GenericViewSet
-):
-
-    permission_classes = (permissions.AllowAny, )
-
-    pass
-
-
-class TagViewSet(ListRetrieveViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
-class IngredientViewSet(ListRetrieveViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-
-
-class APIFavoriteRecipe(views.APIView):
-
-    lookup_field = 'recipe'
-
-    # def post(self, request):
-    #     recipe = Recipe.objects.get(id=self.kwargs.get('recipe'))
-    #     data = {
-    #         'user': request.user,
-    #         'recipe': recipe
-    #     }
-    #     serializer = FavoriteRecipeWriteSerializer(data=data)
-    #     serializer.is_valid(raise_exception=True)
-    #     validate_data = serializer.validated_data
-    #     FavoriteRecipe.objects.create(**validate_data)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-

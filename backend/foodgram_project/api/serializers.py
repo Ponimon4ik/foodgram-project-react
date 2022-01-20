@@ -35,7 +35,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
     )
-    amount = serializers.IntegerField()
+    amount = serializers.IntegerField() # поробовать убрать
 
     class Meta:
 
@@ -50,6 +50,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         many=True, source='ingredients_in_recipe'
     )
     tags = TagRecipeSerializer(many=True, source='tags_in_recipe')
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
 
@@ -57,9 +58,17 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('__all__',)
 
+    # def is_favorited(self, obj):
+    #     user = self.request.user
+    #     recipe = user.favorite_recipe.recipe
+    #     if recipe == obj:
+    #         return True
+    #     return False
+
+
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-
+    # HiddenField + убрать из метода save() во вьюсете
     author = serializers.PrimaryKeyRelatedField(
         read_only=True, default=serializers.CurrentUserDefault()
     )
@@ -72,9 +81,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True
     )
     image = Base64ImageField()
-    name = serializers.CharField()
-    text = serializers.CharField()
-    cooking_time = serializers.IntegerField()
+    name = serializers.CharField() # попробовать убрать
+    text = serializers.CharField() # попробовать убрать 
+    cooking_time = serializers.IntegerField() # попробовать убрать
 
     class Meta:
         model = Recipe
@@ -142,7 +151,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class FavoriteRecipeReadSerializer(serializers.ModelSerializer):
-
+    # Попробовать нереляционные поля оставить source = recipe.id.
     id = serializers.SlugRelatedField(
         source='recipe', slug_field='id',
         queryset=Recipe.objects.all()
@@ -166,10 +175,11 @@ class FavoriteRecipeReadSerializer(serializers.ModelSerializer):
 
 
 class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
-
+    # HiddenField + убрать из метода save() во вьюсете default=serializers.CurrentUserDefault()
+    # Попробовать убрать вообще
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
-    )
+    )# убрать queryset + read_only == true или попробовать вообще убрать
     recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all(),
 
                                                 )
@@ -184,6 +194,6 @@ class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
                 message=UNIQUE_FAVORITE_RECIPE,
             )
         ]
-
+        #read_only = all
     def to_representation(self, instance):
         return FavoriteRecipeReadSerializer(instance).data
