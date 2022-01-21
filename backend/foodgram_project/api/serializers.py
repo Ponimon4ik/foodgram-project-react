@@ -4,13 +4,14 @@ from drf_extra_fields.fields import Base64ImageField
 from django.db.models import Count
 
 from recipes.models import (Recipe, TagRecipe, Tag, Ingredient,
-                            IngredientRecipe, FavoriteRecipe)
+                            IngredientRecipe, FavoriteRecipe, ShoppingCart)
 from users.models import User, Follow
 from users.serializers import CustomUserSerializer
 
 UNIQUE_FAVORITE_RECIPE = 'Рецепт уже находится в избранном'
-SUBSCRIPTION_ERROR = "Невозможно подписаться на себя"
+SUBSCRIPTION_ERROR = 'Невозможно подписаться на себя'
 DUPLICATE_SUBSCRIPTION = 'Вы уже подписаны на данного автора'
+DUBLICATE_IN_SHOPPING_CART = 'Рецепт уже находится в списке покупок'
 
 class TagRecipeSerializer(serializers.ModelSerializer):
 
@@ -61,7 +62,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     # def is_favorited(self, obj):
     #     user = self.request.user
-    #     recipe = user.favorite_recipe.recipe
+    #     favorite_recipes = user.favorite_recipe.recipe.all()
     #     if recipe == obj:
     #         return True
     #     return False
@@ -146,7 +147,11 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('__all__', )
 
-
+# переименовать AuthorsOrFavoriteReadRecipe
+# изменить model на Recipe
+# удалить все поля
+# FavoriteRecipeWriteSerializer to_representation cделать instance.recipe
+# Удалить AuthorsRecipeSerializer
 class FavoriteRecipeReadSerializer(serializers.ModelSerializer):
 
     id = serializers.ReadOnlyField(source='recipe.id')
@@ -184,7 +189,9 @@ class AuthorsRecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
-
+# Изменить модель на User
+# удалить все поля кроме recipes изменить сериализатор на AuthorsOrFavoriteReadRecipe
+# убрать у recipes source
 class FollowReadSerializer(serializers.ModelSerializer):
 
     id = serializers.StringRelatedField(source='following.id')
@@ -207,6 +214,10 @@ class FollowReadSerializer(serializers.ModelSerializer):
         read_only_fields = ('__all__', )
 
 
+# to_representation изменить queryset
+# User.objects.filter(id=instance.following.id).
+# annotate(to_representation=Count('recipes')).order_by('id')
+# obj = queryset.get(id=instance.following.id)
 class FollowSerializer(serializers.ModelSerializer):
 
     user = serializers.HiddenField(
@@ -235,3 +246,23 @@ class FollowSerializer(serializers.ModelSerializer):
             ).order_by('id')
         obj = queryset.get(id=instance.id)
         return FollowReadSerializer(obj).data
+
+# class ShoppingCartSerializer(serializers.ModelSerializer):
+
+#     user = serializers.HiddenField(
+#         default=serializers.CurrentUserDefault()
+#     )
+
+#     class Meta:
+#         fields = ('user', 'recipe')
+#         model = ShoppingCart,
+#         validators = [
+#             UniqueTogetherValidator(
+#                 queryset=ShoppingCart.objects.all(),
+#                 fields=['user', 'recipe'],
+#                 message=DUPLICATE_SUBSCRIPTION
+#             )
+#         ]
+
+#     def to_representation(self, instance):
+#         return AuthorsOrFavoriteReadRecipe(instance.recipe).data

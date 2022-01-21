@@ -5,10 +5,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
-from recipes.models import Recipe, Tag, Ingredient, FavoriteRecipe
+from recipes.models import Recipe, Tag, Ingredient, FavoriteRecipe, ShoppingCart
 from .serializers import (RecipeReadSerializer, RecipeWriteSerializer,
                           TagSerializer, IngredientSerializer,
-                          FavoriteRecipeWriteSerializer)
+                          FavoriteRecipeWriteSerializer, ShoppingCartSerializer)
 from .permissions import IsAuthorOrAdminOrReadOnly
 
 
@@ -41,7 +41,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    # @action(
+    #     methods=['post', 'delete'],
+    #     detail=True,
+    # )
+    # def shopping_cart(self, request, pk=None):
+    #     data = {
+    #         'user': request.user.id,
+    #         'recipe': pk
+    #     }
+    #     if request.method == 'DELETE':
+    #         shoping_list_recipe = get_object_or_404(ShoppingCart, **data)
+    #         self.perform_destroy(shoping_list_recipe)
+    #         return Response(status=status.HTTP_204_NO_CONTENT)
+    #     serializer = ShoppingCartSerializer(data=data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
