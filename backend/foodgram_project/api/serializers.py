@@ -13,6 +13,7 @@ SUBSCRIPTION_ERROR = 'Невозможно подписаться на себя'
 DUPLICATE_SUBSCRIPTION = 'Вы уже подписаны на данного автора'
 DUBLICATE_IN_SHOPPING_CART = 'Рецепт уже находится в списке покупок'
 
+
 class TagRecipeSerializer(serializers.ModelSerializer):
 
     id = serializers.SlugRelatedField(
@@ -52,7 +53,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         many=True, source='ingredients_in_recipe'
     )
     tags = TagRecipeSerializer(many=True, source='tags_in_recipe')
-   # is_favorited = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
 
@@ -60,12 +62,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('__all__',)
 
-    # def is_favorited(self, obj):
-    #     user = self.request.user
-    #     favorite_recipes = user.favorite_recipe.recipe.all()
-    #     if recipe == obj:
-    #         return True
-    #     return False
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        return user.favorite_recipe.filter(recipe=obj).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        return user.shopping_cart.filter(recipe=obj).exists()
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -129,7 +132,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        return RecipeReadSerializer(instance).data
+        return RecipeReadSerializer(instance, context=self.context).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -147,21 +150,12 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('__all__', )
 
-# переименовать AuthorsOrFavoriteReadRecipe
-# изменить model на Recipe
-# удалить все поля
-# FavoriteRecipeWriteSerializer to_representation cделать instance.recipe
-# Удалить AuthorsRecipeSerializer
-class FavoriteRecipeReadSerializer(serializers.ModelSerializer):
 
-    id = serializers.ReadOnlyField(source='recipe.id')
-    name = serializers.ReadOnlyField(source='recipe.name')
-    image = Base64ImageField(source='recipe.image')
-    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
+class AuthorsOrFavoriteRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ('id', 'name', 'image', 'cooking_time')
-        model = FavoriteRecipe
+        model = Recipe
         read_only_fields = ('__all__', )
 
 
@@ -180,44 +174,30 @@ class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
         read_only_fields = ('__all__', )
 
     def to_representation(self, instance):
-        return FavoriteRecipeReadSerializer(instance).data
+        return AuthorsOrFavoriteRecipeSerializer(instance.recipe).data
 
 
-class AuthorsRecipeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-
-# Изменить модель на User
-# удалить все поля кроме recipes изменить сериализатор на AuthorsOrFavoriteReadRecipe
-# убрать у recipes source
 class FollowReadSerializer(serializers.ModelSerializer):
 
-    id = serializers.StringRelatedField(source='following.id')
-    email = serializers.EmailField(source='following.email')
-    username = serializers.CharField(source='following.username')
-    first_name = serializers.CharField(source='following.first_name')
-    last_name = serializers.CharField(source='following.last_name')
-    recipes = AuthorsRecipeSerializer(
-        source='following.recipes',
+    recipes = AuthorsOrFavoriteRecipeSerializer(
         many=True
     )
     recipes_count = serializers.IntegerField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = Follow
+        model = User
         fields = (
             'email', 'id', 'username', 'first_name', 'last_name',
-            'recipes', 'recipes_count'
+            'recipes', 'recipes_count', 'is_subscribed'
         )
         read_only_fields = ('__all__', )
 
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        return user.follower.filter(following=obj).exists()
 
-# to_representation изменить queryset
-# User.objects.filter(id=instance.following.id).
-# annotate(to_representation=Count('recipes')).order_by('id')
-# obj = queryset.get(id=instance.following.id)
+
 class FollowSerializer(serializers.ModelSerializer):
 
     user = serializers.HiddenField(
@@ -237,32 +217,36 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def validate_following(self, value):
         if value == self.context['request'].user:
-            raise serializers.ValidationError(SUBSCRIPTION_ERROR)
+            raise serializers.ValidationError(detail=SUBSCRIPTION_ERROR)
         return value
 
     def to_representation(self, instance):
-        queryset = Follow.objects.annotate(
-                recipes_count=Count('following__recipes')
-            ).order_by('id')
-        obj = queryset.get(id=instance.id)
+        queryset = User.objects.filter(
+            id=instance.following.id).annotate(
+            recipes_count=Count('recipes')
+        ).order_by('id')
+        obj = queryset.get(id=instance.following.id)
         return FollowReadSerializer(obj).data
 
-# class ShoppingCartSerializer(serializers.ModelSerializer):
 
-#     user = serializers.HiddenField(
-#         default=serializers.CurrentUserDefault()
-#     )
+class ShoppingCartSerializer(serializers.ModelSerializer):
 
-#     class Meta:
-#         fields = ('user', 'recipe')
-#         model = ShoppingCart,
-#         validators = [
-#             UniqueTogetherValidator(
-#                 queryset=ShoppingCart.objects.all(),
-#                 fields=['user', 'recipe'],
-#                 message=DUPLICATE_SUBSCRIPTION
-#             )
-#         ]
+    user = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
 
-#     def to_representation(self, instance):
-#         return AuthorsOrFavoriteReadRecipe(instance.recipe).data
+    class Meta:
+        fields = ('user', 'recipe')
+        model = ShoppingCart
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ShoppingCart.objects.all(),
+                fields=['user', 'recipe'],
+                message=DUBLICATE_IN_SHOPPING_CART
+            )
+        ]
+
+    def to_representation(self, instance):
+        return AuthorsOrFavoriteRecipeSerializer(
+            instance.recipe, context=self.context
+        ).data

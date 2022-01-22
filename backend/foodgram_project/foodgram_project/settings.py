@@ -120,7 +120,8 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
     'PAGE_SIZE': 5,
-    'NON_FIELD_ERRORS_KEY': 'errors'
+    'NON_FIELD_ERRORS_KEY': 'errors',
+    'EXCEPTION_HANDLER': 'api.exception.custom_exception_handler'
 }
 
 DJOSER = {

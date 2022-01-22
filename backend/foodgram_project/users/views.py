@@ -1,5 +1,5 @@
 from rest_framework import (status, permissions, mixins,
-                            viewsets, pagination)
+                            viewsets, pagination, )
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from djoser.serializers import SetPasswordSerializer
@@ -53,17 +53,23 @@ class UserViewSet(ListCreateRetrieveViewSet):
 
     @action(
         ['get'], detail=False,
-        pagination_class=pagination.LimitOffsetPagination
     )
     def subscriptions(self, request):
-        queryset = request.user.follower.annotate(
-                recipes_count=Count('following__recipes')
-            ).order_by('id')
+        follows = request.user.follower.select_related('following')
+        authors_id = []
+        for e in follows:
+            authors_id.append(e.following.id)
+        queryset = User.objects.filter(pk__in=authors_id).annotate(
+            recipes_count=Count('recipes'))
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = FollowReadSerializer(page, many=True)
+            serializer = FollowReadSerializer(
+                page, many=True, context={'request': request}
+            )
             return self.get_paginated_response(serializer.data)
-        serializer = FollowReadSerializer(queryset, many=True)
+        serializer = FollowReadSerializer(
+            queryset, many=True, context={'request': request}
+        )
         return Response(serializer.data)
 
     @action(
@@ -77,10 +83,17 @@ class UserViewSet(ListCreateRetrieveViewSet):
             'following': pk
         }
         if request.method == 'DELETE':
-            subscription = get_object_or_404(Follow, **data)
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            get_object_or_404(User, pk=pk)
+            if Follow.objects.filter(**data).exists():
+                subscription = get_object_or_404(Follow, **data)
+                subscription.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {'errors': 'Вы не были подписаны на данного автора'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        get_object_or_404(User, pk=pk)
         serializer = FollowSerializer(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
