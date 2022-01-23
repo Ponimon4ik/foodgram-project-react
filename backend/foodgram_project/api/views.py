@@ -2,6 +2,12 @@ from rest_framework import (status, viewsets, pagination)
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from django.http import FileResponse
+from django.db.models import Sum
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import io
 
 from recipes.models import (Recipe, Tag, Ingredient,
                             FavoriteRecipe, ShoppingCart)
@@ -71,6 +77,39 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(
+        methods=['get', ],
+        detail=False,
+    )
+    def download_shopping_cart(self, request):
+        shopping_cart = request.user.shopping_cart.values(
+            'recipe__ingredients_in_recipe__ingredient__name',
+            'recipe__ingredients_in_recipe__ingredient__measurement_unit'
+        ).annotate(quantity=Sum('recipe__ingredients_in_recipe__amount'))
+        buffer = io.BytesIO()
+        pdfmetrics.registerFont(TTFont('FreeSans', 'static/FreeSans.ttf'))
+        p = canvas.Canvas(buffer)
+        p.setFont('FreeSans', 8)
+        y = 800
+        for ingredient in shopping_cart:
+            (
+                name,
+                measurement_unit,
+                amount
+            ) = ingredient.values()
+            p.drawString(
+                100,
+                y,
+                f'{name} {amount} {measurement_unit}'
+            )
+            y -= 15
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+        return FileResponse(
+            buffer, as_attachment=True, filename='shopping_cart.pdf',
+        )
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
