@@ -75,7 +75,7 @@ class UserViewSet(ListCreateRetrieveViewSet):
     @action(
         ['post', 'delete'],
         detail=True,
-        url_path='subscriptions',
+        url_path='subscribe',
     )
     def create_or_delete_subscription(self, request, pk=None):
         data = {

@@ -48,11 +48,11 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
 
 class RecipeReadSerializer(serializers.ModelSerializer):
 
+    tags = TagRecipeSerializer(many=True, source='tags_in_recipe')
     author = CustomUserSerializer()
     ingredients = IngredientRecipeSerializer(
         many=True, source='ingredients_in_recipe'
     )
-    tags = TagRecipeSerializer(many=True, source='tags_in_recipe')
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -226,7 +226,10 @@ class FollowSerializer(serializers.ModelSerializer):
             recipes_count=Count('recipes')
         ).order_by('id')
         obj = queryset.get(id=instance.following.id)
-        return FollowReadSerializer(obj).data
+        return FollowReadSerializer(
+            obj,
+            context={'request': self.context['request']}
+        ).data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):

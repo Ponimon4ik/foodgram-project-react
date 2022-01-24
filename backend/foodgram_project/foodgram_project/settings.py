@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_filters' ,
     'rest_framework.authtoken',
     'djoser',
     'api.apps.ApiConfig',
@@ -119,7 +120,6 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
-    'PAGE_SIZE': 5,
     'NON_FIELD_ERRORS_KEY': 'errors',
     'EXCEPTION_HANDLER': 'api.exception.custom_exception_handler'
 }
