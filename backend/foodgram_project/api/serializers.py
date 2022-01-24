@@ -150,7 +150,7 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('__all__', )
 
-
+#Recipe_Without_Ingredients_Serializer переименовать
 class AuthorsOrFavoriteRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
