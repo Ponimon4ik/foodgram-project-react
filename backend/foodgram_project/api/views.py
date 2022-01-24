@@ -1,3 +1,5 @@
+import io
+
 from rest_framework import (status, viewsets, pagination)
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -7,7 +9,6 @@ from django.db.models import Sum
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-import io
 
 from recipes.models import (Recipe, Tag, Ingredient,
                             FavoriteRecipe, ShoppingCart)
