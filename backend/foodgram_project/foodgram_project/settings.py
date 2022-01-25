@@ -120,7 +120,6 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
-    'NON_FIELD_ERRORS_KEY': 'errors',
     'EXCEPTION_HANDLER': 'api.exception.custom_exception_handler'
 }
 

@@ -150,8 +150,8 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('__all__', )
 
-#Recipe_Without_Ingredients_Serializer переименовать
-class AuthorsOrFavoriteRecipeSerializer(serializers.ModelSerializer):
+
+class RecipeWithoutIngredients(serializers.ModelSerializer):
 
     class Meta:
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -174,12 +174,12 @@ class FavoriteRecipeWriteSerializer(serializers.ModelSerializer):
         read_only_fields = ('__all__', )
 
     def to_representation(self, instance):
-        return AuthorsOrFavoriteRecipeSerializer(instance.recipe).data
+        return RecipeWithoutIngredients(instance.recipe).data
 
 
 class FollowReadSerializer(serializers.ModelSerializer):
 
-    recipes = AuthorsOrFavoriteRecipeSerializer(
+    recipes = RecipeWithoutIngredients(
         many=True
     )
     recipes_count = serializers.IntegerField()
@@ -250,6 +250,6 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         ]
 
     def to_representation(self, instance):
-        return AuthorsOrFavoriteRecipeSerializer(
+        return RecipeWithoutIngredients(
             instance.recipe, context=self.context
         ).data

@@ -7,16 +7,22 @@ class Tag(models.Model):
 
     name = models.TextField(
         verbose_name='Название',
-        max_length=50
+        max_length=50, unique=True
     )
     color = models.CharField(
         verbose_name='Цвет',
-        unique=True, max_length=50
+        unique=True, max_length=50,
     )
     slug = models.SlugField(
         verbose_name='Ключ',
         unique=True, max_length=50
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'color', 'slug'],
+                                    name='unique_tag')
+        ]
 
 
 class Ingredient(models.Model):

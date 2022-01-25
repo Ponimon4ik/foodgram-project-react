@@ -1,7 +1,7 @@
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import ValidationError
 
-special_keys = ['errors', 'following', ]
+special_keys = ['non_field_errors', 'following', ]
 
 
 def custom_exception_handler(exc, context):

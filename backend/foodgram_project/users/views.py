@@ -10,6 +10,7 @@ from .models import User, Follow
 from .serializers import (CustomUserSerializer, CustomUserCreateSerializer,
                           )
 from api.serializers import FollowReadSerializer, FollowSerializer
+from api.utils import managing_subscriptions
 
 
 class ListCreateRetrieveViewSet(
@@ -78,22 +79,4 @@ class UserViewSet(ListCreateRetrieveViewSet):
         url_path='subscribe',
     )
     def create_or_delete_subscription(self, request, pk=None):
-        data = {
-            'user': request.user,
-            'following': pk
-        }
-        if request.method == 'DELETE':
-            get_object_or_404(User, pk=pk)
-            if Follow.objects.filter(**data).exists():
-                subscription = get_object_or_404(Follow, **data)
-                subscription.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'errors': 'Вы не были подписаны на данного автора'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        get_object_or_404(User, pk=pk)
-        serializer = FollowSerializer(data=data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return managing_subscriptions(request, pk, Follow, FollowSerializer)

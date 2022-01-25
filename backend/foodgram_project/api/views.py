@@ -1,6 +1,6 @@
 import io
 
-from rest_framework import status, viewsets, pagination
+from rest_framework import status, viewsets, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
@@ -20,13 +20,13 @@ from .serializers import (RecipeReadSerializer, RecipeWriteSerializer,
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .pagination import CustomPagination
 from .filtersets import RecipeFilter
+from .utils import managing_subscriptions, create_pdf_shopping_cart
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
-    filter_backends = (DjangoFilterBackend,)
-    pagination_class = pagination.PageNumberPagination
-    pagination_class.page_size = 6
+    queryset = Recipe.objects.all().order_by('name')
+    filter_backends = (DjangoFilterBackend, )
+    pagination_class = CustomPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly, )
     filterset_class = RecipeFilter
 
@@ -35,55 +35,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
+
     @action(
         methods=['post', 'delete'],
         detail=True
     )
     def favorite(self, request, pk=None):
-        data = {
-            'user': request.user.id,
-            'recipe': pk
-        }
-        if request.method == 'DELETE':
-            if FavoriteRecipe.objects.filter(**data).exists():
-                favorite_recipe = get_object_or_404(FavoriteRecipe, **data)
-                self.perform_destroy(favorite_recipe)
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'errors': 'Рецепт не был в избранном'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        get_object_or_404(Recipe, pk=pk)
-        serializer = FavoriteRecipeWriteSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return managing_subscriptions(request, pk, FavoriteRecipe, FavoriteRecipeWriteSerializer)
 
     @action(
         methods=['post', 'delete'],
         detail=True,
     )
     def shopping_cart(self, request, pk=None):
-        data = {
-            'user': request.user.id,
-            'recipe': pk
-        }
-        if request.method == 'DELETE':
-            if ShoppingCart.objects.filter(**data).exists():
-                shoping_list_recipe = get_object_or_404(ShoppingCart, **data)
-                self.perform_destroy(shoping_list_recipe)
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(
-                {'errors': 'Рецепт не был в списке покупок'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        get_object_or_404(Recipe, pk=pk)
-        serializer = ShoppingCartSerializer(
-            data=data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return managing_subscriptions(request, pk, ShoppingCart, ShoppingCartSerializer)
 
     @action(
         methods=['get', ],
@@ -94,28 +63,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'recipe__ingredients_in_recipe__ingredient__name',
             'recipe__ingredients_in_recipe__ingredient__measurement_unit'
         ).annotate(quantity=Sum('recipe__ingredients_in_recipe__amount'))
-        buffer = io.BytesIO()
-        pdfmetrics.registerFont(TTFont('FreeSans', 'static/FreeSans.ttf'))
-        p = canvas.Canvas(buffer)
-        p.setFont('FreeSans', 8)
-        y = 800
-        for ingredient in shopping_cart:
-            (
-                name,
-                measurement_unit,
-                amount
-            ) = ingredient.values()
-            p.drawString(
-                100,
-                y,
-                f'{name} {amount} {measurement_unit}'
-            )
-            y -= 15
-        p.showPage()
-        p.save()
-        buffer.seek(0)
+        pdf_file = create_pdf_shopping_cart(shopping_cart)
         return FileResponse(
-            buffer, as_attachment=True, filename='shopping_cart.pdf',
+            pdf_file, as_attachment=True, filename='shopping_cart.pdf',
         )
 
 
@@ -129,3 +79,5 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('^name',)
