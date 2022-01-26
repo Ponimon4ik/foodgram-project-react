@@ -1,17 +1,16 @@
 import os
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '#*_=(-6t^ob4(!^_rg31+5=kq2aim%q4k(yy$*tld__i#%p25e'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY', default='#*_=(-6t^ob4(!^_rg31+5=kq2aim%q4k(yy$*tld__i#%p25e'
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+DEBUG = os.getenv('DEBUG_STATUS', default=False)
 
-# Application definition
+ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS', default=['*']), ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,23 +56,23 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'foodgram_project.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', default='foodgram'),
+        'USER': os.getenv('POSTGRES_USER', default='foodgram_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='Valenok123'),
+        'HOST': os.getenv('DB_HOST', default='db'),
+        'PORT': os.getenv('DB_PORT', default='5432'),
     }
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
-
+AUTH_USER_MODEL = 'users.User'
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -90,9 +89,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/2.2/topics/i18n/
-
 LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'Europe/Moscow'
@@ -102,10 +98,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
@@ -132,5 +124,3 @@ DJOSER = {
         'user': 'users.serializers.CustomUserSerializer',
     },
 }
-
-AUTH_USER_MODEL = 'users.User'
