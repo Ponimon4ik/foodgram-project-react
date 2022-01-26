@@ -1,16 +1,14 @@
 import io
 
-from reportlab.pdfgen import canvas
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.response import Response
+from reportlab.pdfgen import canvas
 from rest_framework import status
-from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
 
-from recipes.models import (Recipe, FavoriteRecipe,
-                            ShoppingCart)
+from recipes.models import FavoriteRecipe, Recipe, ShoppingCart
 from users.models import Follow, User
 
 NO_IN_SHOPPING_CART = 'Рецепт не был в списке покупок'

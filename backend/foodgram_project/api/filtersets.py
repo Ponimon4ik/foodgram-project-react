@@ -1,7 +1,5 @@
-from django_filters import (FilterSet, ModelMultipleChoiceFilter,
-                            NumberFilter,)
-
 from django.core.validators import MaxValueValidator
+from django_filters import FilterSet, ModelMultipleChoiceFilter, NumberFilter
 
 from recipes.models import Recipe, Tag
 

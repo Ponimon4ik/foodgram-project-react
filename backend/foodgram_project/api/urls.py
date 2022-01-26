@@ -1,7 +1,7 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import RecipeViewSet, TagViewSet, IngredientViewSet
+from .views import IngredientViewSet, RecipeViewSet, TagViewSet
 
 FAVORITE_RECIPE_URL = r'recipes/(?P<recipe_id>\d+)/favorite/'
 

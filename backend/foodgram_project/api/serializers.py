@@ -1,11 +1,11 @@
+from django.db.models import Count
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from drf_extra_fields.fields import Base64ImageField
-from django.db.models import Count
 
-from recipes.models import (Recipe, TagRecipe, Tag, Ingredient,
-                            IngredientRecipe, FavoriteRecipe, ShoppingCart)
-from users.models import User, Follow
+from recipes.models import (FavoriteRecipe, Ingredient, IngredientRecipe,
+                            Recipe, ShoppingCart, Tag, TagRecipe)
+from users.models import Follow, User
 from users.serializers import CustomUserSerializer
 
 UNIQUE_FAVORITE_RECIPE = 'Рецепт уже находится в избранном'

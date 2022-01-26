@@ -1,13 +1,11 @@
-from rest_framework import (status, permissions, mixins,
-                            viewsets, pagination, )
+from django.db.models import Count
+from djoser.serializers import SetPasswordSerializer
+from rest_framework import mixins, pagination, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from djoser.serializers import SetPasswordSerializer
-from django.db.models import Count
 
-from .models import User, Follow
-from .serializers import (CustomUserSerializer, CustomUserCreateSerializer,
-                          )
+from .models import Follow, User
+from .serializers import CustomUserCreateSerializer, CustomUserSerializer
 from api.serializers import FollowReadSerializer, FollowSerializer
 from api.utils import managing_subscriptions
 

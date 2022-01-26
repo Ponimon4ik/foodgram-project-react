@@ -1,19 +1,18 @@
-from rest_framework import viewsets, filters
-from rest_framework.decorators import action
-from django_filters.rest_framework import DjangoFilterBackend
-from django.http import FileResponse
 from django.db.models import Sum
+from django.http import FileResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, viewsets
+from rest_framework.decorators import action
 
-from recipes.models import (Recipe, Tag, Ingredient,
-                            FavoriteRecipe, ShoppingCart)
-from .serializers import (RecipeReadSerializer, RecipeWriteSerializer,
-                          TagSerializer, IngredientSerializer,
-                          FavoriteRecipeWriteSerializer,
-                          ShoppingCartSerializer)
-from .permissions import IsAuthorOrAdminOrReadOnly
-from .pagination import CustomPagination
 from .filtersets import RecipeFilter
-from .utils import managing_subscriptions, create_pdf_shopping_cart
+from .pagination import CustomPagination
+from .permissions import IsAuthorOrAdminOrReadOnly
+from .serializers import (FavoriteRecipeWriteSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          ShoppingCartSerializer, TagSerializer)
+from .utils import create_pdf_shopping_cart, managing_subscriptions
+from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
+                            Tag)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

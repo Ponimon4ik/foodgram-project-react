@@ -1,9 +1,8 @@
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
-from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework.validators import UniqueTogetherValidator
 
 from .models import User
-
 
 EMAIL_ERROR = "Пользователь с таким email уже существует"
 
