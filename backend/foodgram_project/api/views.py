@@ -1,15 +1,9 @@
-import io
-
 from rest_framework import status, viewsets, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
 from django.http import FileResponse
 from django.db.models import Sum
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 
 from recipes.models import (Recipe, Tag, Ingredient,
                             FavoriteRecipe, ShoppingCart)
@@ -24,7 +18,7 @@ from .utils import managing_subscriptions, create_pdf_shopping_cart
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all().order_by('name')
+    queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend, )
     pagination_class = CustomPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly, )
@@ -35,29 +29,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({'request': self.request})
-        return context
-
     @action(
         methods=['post', 'delete'],
         detail=True
     )
     def favorite(self, request, pk=None):
-        return managing_subscriptions(request, pk, FavoriteRecipe, FavoriteRecipeWriteSerializer)
+        return managing_subscriptions(
+            request, pk, FavoriteRecipe, FavoriteRecipeWriteSerializer
+            )
 
     @action(
         methods=['post', 'delete'],
         detail=True,
     )
     def shopping_cart(self, request, pk=None):
-        return managing_subscriptions(request, pk, ShoppingCart, ShoppingCartSerializer)
+        return managing_subscriptions(
+            request, pk, ShoppingCart, ShoppingCartSerializer
+            )
 
-    @action(
-        methods=['get', ],
-        detail=False,
-    )
+    @action(detail=False,)
     def download_shopping_cart(self, request):
         shopping_cart = request.user.shopping_cart.values(
             'recipe__ingredients_in_recipe__ingredient__name',
