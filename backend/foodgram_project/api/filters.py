@@ -1,5 +1,6 @@
 from django.core.validators import MaxValueValidator
 from django_filters import FilterSet, ModelMultipleChoiceFilter, NumberFilter
+from rest_framework import filters
 
 from recipes.models import Recipe, Tag
 
@@ -37,3 +38,7 @@ class RecipeFilter(FilterSet):
         if value:
             return queryset.filter(shopping_cart__user=user)
         return Recipe.objects.all()
+
+
+class IngredientSearchFilter(filters.SearchFilter):
+    search_param = 'name'
