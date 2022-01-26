@@ -3,7 +3,6 @@ from rest_framework import (status, permissions, mixins,
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from djoser.serializers import SetPasswordSerializer
-from django.shortcuts import get_object_or_404
 from django.db.models import Count
 
 from .models import User, Follow

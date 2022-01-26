@@ -29,8 +29,8 @@ class Tag(models.Model):
 
     def __str__(self):
         return (
-            f'{self.name}',
-            f'{self.color}',
+            f'{self.name}, '
+            f'{self.color}, '
             f'{self.slug}'
         )
 
@@ -53,10 +53,10 @@ class Ingredient(models.Model):
             models.UniqueConstraint(fields=['name', 'measurement_unit'],
                                     name='unique_ingredient')
         ]
-    
+
     def __str__(self):
         return (
-            f'{self.name}',
+            f'{self.name}, '
             f'{self.measurement_unit}'
         )
 
@@ -86,8 +86,8 @@ class Recipe(models.Model):
         verbose_name='Время приготовления', help_text='минут'
     )
     pub_date = models.DateTimeField(
-        auto_now_add=True,verbose_name='Дата публикации'
-        )
+        auto_now_add=True, verbose_name='Дата публикации'
+    )
 
     class Meta:
         ordering = ('-pub_date',)
@@ -96,10 +96,10 @@ class Recipe(models.Model):
 
     def __str__(self):
         return(
-            f'{self.author.username}',
-            f'{self.name}',
-            f'{self.text[:10]}',
-            f'{self.cooking_time}',
+            f'{self.author.username}, '
+            f'{self.name}, '
+            f'{self.text[:10]}, '
+            f'{self.cooking_time}, '
             f'{self.pub_date}'
         )
 
@@ -112,25 +112,20 @@ class IngredientRecipe(models.Model):
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
         related_name='ingredients_in_recipe'
-        )
+    )
     amount = models.PositiveIntegerField(verbose_name='Количество')
 
     class Meta:
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецептах'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['ingredient', 'recipe'],
-                name='unique_ingredient_in_recipe'
-            )
-        ]
 
     def __str__(self):
         return(
-            f'{self.ingredient.name}',
-            f'{self.recipe.name}',
+            f'{self.ingredient.name}, '
+            f'{self.recipe.name}, '
             f'{self.amount}'
         )
+
 
 class TagRecipe(models.Model):
     tag = models.ForeignKey(
@@ -146,17 +141,11 @@ class TagRecipe(models.Model):
     class Meta:
         verbose_name = 'Тег в рецепте'
         verbose_name_plural = 'Теги в рецептах'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['tag', 'recipe'],
-                name='unique_tag_in_recipe'
-            )
-        ]
 
     def __str__(self):
         return(
-            f'{self.tag.name}',
-            f'{self.recipe.name}',
+            f'{self.tag.name}, '
+            f'{self.recipe.name}, '
         )
 
 
@@ -185,9 +174,10 @@ class FavoriteRecipe(models.Model):
 
     def __str__(self):
         return(
-            f'{self.user.username}',
-            f'{self.recipe.name}',
+            f'{self.user.username}, '
+            f'{self.recipe.name},'
         )
+
 
 class ShoppingCart(models.Model):
 
@@ -214,6 +204,6 @@ class ShoppingCart(models.Model):
 
     def __str__(self):
         return(
-            f'{self.user.username}',
-            f'{self.recipe.name}',
+            f'{self.user.username}, '
+            f'{self.recipe.name}'
         )

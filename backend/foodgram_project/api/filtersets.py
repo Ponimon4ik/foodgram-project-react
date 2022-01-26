@@ -1,4 +1,4 @@
-from django_filters import (FilterSet,ModelMultipleChoiceFilter,
+from django_filters import (FilterSet, ModelMultipleChoiceFilter,
                             NumberFilter,)
 
 from django.core.validators import MaxValueValidator
@@ -34,7 +34,7 @@ class RecipeFilter(FilterSet):
             return queryset.filter(favorite_recipe__user=user)
         return Recipe.objects.all()
 
-    def get_is_in_shopping_cart(self, queryset,  name, value):
+    def get_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
         if value:
             return queryset.filter(shopping_cart__user=user)

@@ -12,6 +12,8 @@ UNIQUE_FAVORITE_RECIPE = 'Рецепт уже находится в избран
 SUBSCRIPTION_ERROR = 'Невозможно подписаться на себя'
 DUPLICATE_SUBSCRIPTION = 'Вы уже подписаны на данного автора'
 DUBLICATE_IN_SHOPPING_CART = 'Рецепт уже находится в списке покупок'
+UNIQUE_INGREDIENT_IN_RECIPE = (
+    'Вы уже добавили ингредиент: {ingredient} в рецепт!')
 
 
 class TagRecipeSerializer(serializers.ModelSerializer):
@@ -59,16 +61,19 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Recipe
-        #fields = '__all__'
         read_only_fields = ('__all__',)
         exclude = ['pub_date']
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
+        if user.is_anonymous:
+            return False
         return user.favorite_recipe.filter(recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user
+        if user.is_anonymous:
+            return False
         return user.shopping_cart.filter(recipe=obj).exists()
 
 
@@ -110,22 +115,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients_in_recipe', None)
         tags_data = validated_data.pop('tags', None)
-
-        instance_fields = {
-            'image': instance.image,
-            'name': instance.name,
-            'text': instance.text,
-            'cooking_time': instance.cooking_time
-        }
-        for key, value in validated_data.items():
-            instance_fields[key] = value
-
-        # instance.image = validated_data.get('image', instance.image)
-        # instance.name = validated_data.get('name', instance.name)
-        # instance.text = validated_data.get('text', instance.text)
-        # instance.cooking_time = validated_data.get(
-        #     'cooking_time', instance.cooking_time
-        # )
+        instance.image = validated_data.get('image', instance.image)
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
+        instance.save()
         if ingredients_data:
             instance.ingredients.clear()
             for ingredient in ingredients_data:

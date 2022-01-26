@@ -9,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
-from recipes.models import (Recipe, Tag, Ingredient,
-                            FavoriteRecipe, ShoppingCart)
+from recipes.models import (Recipe, FavoriteRecipe,
+                            ShoppingCart)
 from users.models import Follow, User
 
 NO_IN_SHOPPING_CART = 'Рецепт не был в списке покупок'
@@ -35,7 +35,7 @@ def managing_subscriptions(request, pk, model, model_serializer):
     if request.method != 'DELETE':
         serializer = model_serializer(
             data=data, context={'request': request}
-            )
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -48,11 +48,11 @@ def managing_subscriptions(request, pk, model, model_serializer):
             ShoppingCart: NO_IN_SHOPPING_CART,
             FavoriteRecipe: NO_IN_FAVORITE,
             Follow: NO_SUBSCRIPTION_ON_AUTHOR
-            }
+        }
         return Response(
             {'errors': error_msg[model]},
             status=status.HTTP_400_BAD_REQUEST
-            )
+        )
 
 
 def create_pdf_shopping_cart(shopping_cart):

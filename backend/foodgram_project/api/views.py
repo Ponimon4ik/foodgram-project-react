@@ -1,5 +1,4 @@
-from rest_framework import status, viewsets, filters
-from rest_framework.response import Response
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
@@ -36,7 +35,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         return managing_subscriptions(
             request, pk, FavoriteRecipe, FavoriteRecipeWriteSerializer
-            )
+        )
 
     @action(
         methods=['post', 'delete'],
@@ -45,7 +44,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         return managing_subscriptions(
             request, pk, ShoppingCart, ShoppingCartSerializer
-            )
+        )
 
     @action(detail=False,)
     def download_shopping_cart(self, request):
