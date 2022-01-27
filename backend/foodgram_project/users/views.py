@@ -1,6 +1,6 @@
 from django.db.models import Count
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import pagination, permissions, status, viewsets
+from rest_framework import pagination, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 

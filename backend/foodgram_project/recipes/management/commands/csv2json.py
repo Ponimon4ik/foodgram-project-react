@@ -15,9 +15,10 @@ DATABASE = {
 
 }
 
+
 class Command(BaseCommand):
 
-    def handle(self):
+    def handle(self, *args, **options):
         entries = []
         filename = FIXTURES_DIR
         if not os.path.exists(filename):

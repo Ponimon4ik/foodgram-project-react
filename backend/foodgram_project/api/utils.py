@@ -1,6 +1,5 @@
 import io
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -8,7 +7,9 @@ from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.response import Response
 
-from recipes.models import FavoriteRecipe, Recipe, ShoppingCart
+from recipes.models import (FavoriteRecipe, Recipe,
+                            ShoppingCart, IngredientRecipe,
+                            TagRecipe)
 from users.models import Follow, User
 
 NO_IN_SHOPPING_CART = 'Рецепт не был в списке покупок'
@@ -53,23 +54,26 @@ def managing_subscriptions(request, pk, model, model_serializer):
         )
 
 
-def method(instance, ingredients_data, tags_data, action):
-    if action == 'update':
-        instance.ingredients.clear()
-        instance.tags.clear()
-    if ingredients_data:
+def create_or_update_data(
+        ingredients_data, tags_data, obj, action=None
+):
+    if ingredients_data is not None:
+        if action == 'update':
+            obj.ingredients.clear()
         for ingredient in ingredients_data:
             IngredientRecipe.objects.create(
-                recipe=instance,
+                recipe=obj,
                 ingredient=ingredient['ingredient'],
                 amount=ingredient['amount']
             )
-    if tags_data:
+    if tags_data is not None:
+        if action == 'update':
+            obj.tags.clear()
         for tag in tags_data:
             TagRecipe.objects.create(
-                recipe=instance, tag=tag
+                recipe=obj, tag=tag
             )
-    return instance
+    return obj
 
 
 def create_pdf_shopping_cart(shopping_cart):
