@@ -105,6 +105,7 @@ class Recipe(models.Model):
 
 
 class IngredientRecipe(models.Model):
+
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.PROTECT,
         related_name='ingredients_in_recipe'
@@ -134,6 +135,7 @@ class IngredientRecipe(models.Model):
 
 
 class TagRecipe(models.Model):
+
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,

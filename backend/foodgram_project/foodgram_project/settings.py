@@ -8,9 +8,10 @@ SECRET_KEY = os.getenv(
 )
 
 
-DEBUG = os.getenv('DEBUG_STATUS', default=False)
+DEBUG = os.getenv('DEBUG_STATUS', default=True)
 
-ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS', default=['*']), ]
+ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS', default='*'), ]
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -64,10 +65,11 @@ DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.sqlite3'),
         'NAME': os.getenv('DB_NAME', default=os.path.join(BASE_DIR, 'db.sqlite3')),
-        'USER': os.getenv('POSTGRES_USER', default='foodgram_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='Valenok123'),
-        'HOST': os.getenv('DB_HOST', default='db'),
-        'PORT': os.getenv('DB_PORT', default='5432'),
+        # 'USER': os.getenv('POSTGRES_USER', default='foodgram_user'),
+        # 'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='Valenok123'),
+        # 'HOST': os.getenv('DB_HOST', default='db'),
+        # 'PORT': os.getenv('DB_PORT', default='5432'),
+
     }
 }
 
