@@ -1,6 +1,5 @@
 import io
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -8,7 +7,10 @@ from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.response import Response
 
-from recipes.models import FavoriteRecipe, Recipe, ShoppingCart
+from recipes.models import (FavoriteRecipe, Recipe,
+                            ShoppingCart, IngredientRecipe,
+                            TagRecipe)
+
 from users.models import Follow, User
 
 NO_IN_SHOPPING_CART = 'Рецепт не был в списке покупок'
@@ -41,7 +43,7 @@ def managing_subscriptions(request, pk, model, model_serializer):
         obj = model.objects.get(**data)
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    except ObjectDoesNotExist:
+    except model.DoesNotExist:
         error_msg = {
             ShoppingCart: NO_IN_SHOPPING_CART,
             FavoriteRecipe: NO_IN_FAVORITE,
@@ -51,6 +53,28 @@ def managing_subscriptions(request, pk, model, model_serializer):
             {'errors': error_msg[model]},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+def create_or_update_data(
+        ingredients_data, tags_data, obj, action=None
+):
+    if ingredients_data is not None:
+        if action == 'update':
+            obj.ingredients.clear()
+        for ingredient in ingredients_data:
+            IngredientRecipe.objects.create(
+                recipe=obj,
+                ingredient=ingredient['ingredient'],
+                amount=ingredient['amount']
+            )
+    if tags_data is not None:
+        if action == 'update':
+            obj.tags.clear()
+        for tag in tags_data:
+            TagRecipe.objects.create(
+                recipe=obj, tag=tag
+            )
+    return obj
 
 
 def create_pdf_shopping_cart(shopping_cart):

@@ -1,20 +1,14 @@
 from django.db.models import Count
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import mixins, pagination, permissions, status, viewsets
+from rest_framework import pagination, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Follow, User
-from .serializers import CustomUserCreateSerializer, CustomUserSerializer
 from api.serializers import FollowReadSerializer, FollowSerializer
 from api.utils import managing_subscriptions
-
-
-class ListCreateRetrieveViewSet(
-    mixins.CreateModelMixin, mixins.RetrieveModelMixin,
-    mixins.ListModelMixin, viewsets.GenericViewSet
-):
-    pass
+from .mixins import ListCreateRetrieveViewSet
+from .models import Follow, User
+from .serializers import CustomUserCreateSerializer, CustomUserSerializer
 
 
 class UserViewSet(ListCreateRetrieveViewSet):
@@ -49,14 +43,11 @@ class UserViewSet(ListCreateRetrieveViewSet):
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        ['get'], detail=False,
-    )
+    @action(detail=False,)
     def subscriptions(self, request):
-        follows = request.user.follower.select_related('following')
-        authors_id = []
-        for e in follows:
-            authors_id.append(e.following.id)
+        authors_id = request.user.follower.values_list(
+            'following__id', flat=True
+        )
         queryset = User.objects.filter(pk__in=authors_id).annotate(
             recipes_count=Count('recipes'))
         page = self.paginate_queryset(queryset)

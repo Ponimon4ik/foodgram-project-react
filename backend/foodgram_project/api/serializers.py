@@ -7,13 +7,18 @@ from recipes.models import (FavoriteRecipe, Ingredient, IngredientRecipe,
                             Recipe, ShoppingCart, Tag, TagRecipe)
 from users.models import Follow, User
 from users.serializers import CustomUserSerializer
+from .utils import create_or_update_data
 
 UNIQUE_FAVORITE_RECIPE = 'Рецепт уже находится в избранном'
 SUBSCRIPTION_ERROR = 'Невозможно подписаться на себя'
 DUPLICATE_SUBSCRIPTION = 'Вы уже подписаны на данного автора'
 DUBLICATE_IN_SHOPPING_CART = 'Рецепт уже находится в списке покупок'
 UNIQUE_INGREDIENT_IN_RECIPE = (
-    'Вы уже добавили ингредиент: {ingredient} в рецепт!')
+    'Удалите дубли ингредиентов {ingredient} из рецепта!'
+)
+UNIQUE_TAG_IN_RECIPE = (
+    'Вы уже добавили тег {tag} в рецепт!'
+)
 
 
 class TagRecipeSerializer(serializers.ModelSerializer):
@@ -96,47 +101,49 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         model = Recipe
         exclude = ['pub_date']
 
-    def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients_in_recipe')
-        tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
-        for ingredient in ingredients:
-            IngredientRecipe.objects.create(
-                recipe=recipe,
-                ingredient=ingredient['ingredient'],
-                amount=ingredient['amount']
-            )
+    def validate_tags(self, value):
+        tags = value
+        verified = []
         for tag in tags:
-            TagRecipe.objects.create(
-                recipe=recipe, tag=tag
-            )
-        return recipe
+            if tag not in verified:
+                verified.append(tag)
+            else:
+                raise serializers.ValidationError(
+                    UNIQUE_TAG_IN_RECIPE.format(tag=tag.name))
+        return value
+
+    def validate_ingredients(self, value):
+        ingredients = value
+        verified_id = []
+        for ingredient in ingredients:
+            if ingredient['ingredient'] not in verified_id:
+                verified_id.append(ingredient['ingredient'])
+            else:
+                raise serializers.ValidationError(
+                    [
+                        {
+                            'id': [
+                                UNIQUE_INGREDIENT_IN_RECIPE.format(
+                                    ingredient=ingredient['ingredient'].name
+                                )
+                            ]
+                        }
+                    ]
+                )
+        return value
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients_in_recipe')
+        tags_data = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        return create_or_update_data(ingredients_data, tags_data, recipe)
 
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients_in_recipe', None)
         tags_data = validated_data.pop('tags', None)
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
-        instance.save()
-        if ingredients_data:
-            instance.ingredients.clear()
-            for ingredient in ingredients_data:
-                IngredientRecipe.objects.create(
-                    recipe=instance,
-                    ingredient=ingredient['ingredient'],
-                    amount=ingredient['amount']
-                )
-        if tags_data:
-            instance.tags.clear()
-            for tag in tags_data:
-                TagRecipe.objects.create(
-                    recipe=instance, tag=tag
-                )
-        return instance
+        super().update(instance, validated_data)
+        return create_or_update_data(
+            ingredients_data, tags_data, instance, action='update')
 
     def to_representation(self, instance):
         return RecipeReadSerializer(instance, context=self.context).data
