@@ -115,13 +115,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients_in_recipe', None)
         tags_data = validated_data.pop('tags', None)
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
-        instance.save()
+        super().update(instance, validated_data)
+        # instance.image = validated_data.get('image', instance.image)
+        # instance.name = validated_data.get('name', instance.name)
+        # instance.text = validated_data.get('text', instance.text)
+        # instance.cooking_time = validated_data.get(
+        #     'cooking_time', instance.cooking_time
+        # )
+        # instance.save()
         if ingredients_data:
             instance.ingredients.clear()
             for ingredient in ingredients_data:

@@ -41,7 +41,7 @@ def managing_subscriptions(request, pk, model, model_serializer):
         obj = model.objects.get(**data)
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    except ObjectDoesNotExist:
+    except model.DoesNotExist:
         error_msg = {
             ShoppingCart: NO_IN_SHOPPING_CART,
             FavoriteRecipe: NO_IN_FAVORITE,
@@ -51,6 +51,25 @@ def managing_subscriptions(request, pk, model, model_serializer):
             {'errors': error_msg[model]},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+def method(instance, ingredients_data, tags_data, action):
+    if action == 'update':
+        instance.ingredients.clear()
+        instance.tags.clear()
+    if ingredients_data:
+        for ingredient in ingredients_data:
+            IngredientRecipe.objects.create(
+                recipe=instance,
+                ingredient=ingredient['ingredient'],
+                amount=ingredient['amount']
+            )
+    if tags_data:
+        for tag in tags_data:
+            TagRecipe.objects.create(
+                recipe=instance, tag=tag
+            )
+    return instance
 
 
 def create_pdf_shopping_cart(shopping_cart):
