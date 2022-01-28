@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
@@ -239,7 +240,7 @@ class FollowSerializer(serializers.ModelSerializer):
             id=instance.following.id).annotate(
             recipes_count=Count('recipes')
         ).order_by('id')
-        obj = queryset.get(id=instance.following.id)
+        obj = get_object_or_404(queryset, id=instance.following.id)
         return FollowReadSerializer(
             obj,
             context={'request': self.context['request']}
