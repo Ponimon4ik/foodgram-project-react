@@ -19,6 +19,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
+        сd backend/foodgram_project/
         pip install -r requirements.txt
     - name: Test with flake8
       run: |
