@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apt-get update
 RUN apt-get -y install libpq-dev gcc
 
-COPY ../../.requirements.txt .
+COPY foodgram-project-react/requirements.txt .
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
