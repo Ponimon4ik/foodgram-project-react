@@ -37,8 +37,8 @@ services:
       - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - frontend
-      links:
-      - frontend
+    links:
+    - frontend
 volumes:
   static_value:
   media_value:
