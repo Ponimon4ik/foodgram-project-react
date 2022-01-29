@@ -45,7 +45,7 @@ jobs:
         with:
           context: ./backend/foodgram_project/
           push: true
-          tags: ponimon4ik/foodgram_project_react:latest
+          tags: ponimon4ik/foodgram_project:latest
 
   deploy:
     runs-on: ubuntu-latest
