@@ -38,7 +38,7 @@ services:
     depends_on:
       - frontend
     links:
-    - frontend
+      - frontend
 volumes:
   static_value:
   media_value:
