@@ -8,7 +8,6 @@ services:
       - ./.env
   web:
     image: ponimon4ik/foodgram-project-react:latest
-    container_name: web
     restart: always
     volumes:
       - static_value:/app/static/
@@ -21,7 +20,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: web
     volumes:
       - ./frontend/:/app/result_build/
     depends_on:

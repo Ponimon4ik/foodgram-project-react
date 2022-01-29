@@ -45,7 +45,7 @@ jobs:
         with:
           context: ./backend/foodgram_project/
           push: true
-          tags: ponimon4ik/foodgram-project-react:latest
+          tags: ponimon4ik/foodgram_project_react:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -63,7 +63,6 @@ jobs:
             sudo docker-compose stop
             sudo docker-compose rm web
             touch .env
-            echo DEBUG_STATUS=${{ secrets.DEBUG_STATUS }} >> .env
             echo ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} >> .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
