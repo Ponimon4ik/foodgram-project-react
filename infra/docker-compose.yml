@@ -8,10 +8,11 @@ services:
       - ./.env
   web:
     image: ponimon4ik/foodgram-project-react:latest
+    container_name: web
     restart: always
     volumes:
-      - static_value:/app/static/
-      - media_value:/app/media/
+      - static_value:/app/django_static/
+      - media_value:/app/django_media/
     depends_on:
       - db
     env_file:
@@ -30,12 +31,13 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_value:/app/django_staic
+      - media_value:/app/django_media
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ./frontend/build:/usr/share/nginx/html/
       - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
-      - frontend
-    links:
+      - web
       - frontend
 volumes:
   static_value:

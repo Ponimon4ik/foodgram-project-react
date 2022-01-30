@@ -79,7 +79,7 @@ def create_or_update_data(
 
 def create_pdf_shopping_cart(shopping_cart):
     buffer = io.BytesIO()
-    pdfmetrics.registerFont(TTFont('FreeSans', 'static/FreeSans.ttf'))
+    pdfmetrics.registerFont(TTFont('FreeSans', 'django_static/FreeSans.ttf'))
     p = canvas.Canvas(buffer)
     p.setFont('FreeSans', 20)
     axis_y = 780
