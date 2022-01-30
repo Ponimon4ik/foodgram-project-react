@@ -67,3 +67,4 @@ docker-compose exec web python manage.py loaddata fixtures.json
 
 ### Ссылка на проект:
 [Foodgram_project](http://51.250.4.172:80/)
+![Foodgram_project_workflow](https://github.com/Ponimon4ik/foodgram-project-react/workflows/foodgram_project/badge.svg)
